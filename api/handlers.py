@@ -77,8 +77,8 @@ def create_record(request: RecordCreateRequest, session: Session = Depends(get_d
 
 
 @router.get("/record")
-def get_record(file_id: str, session: Session = Depends(get_db)):
-    record = session.query(Record).filter_by(file_id=file_id).first()
+def get_record(file_id: str, user_id: int, session: Session = Depends(get_db)):
+    record = session.query(Record).filter_by(file_id=file_id, user_id=user_id).first()
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
