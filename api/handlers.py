@@ -42,7 +42,9 @@ async def create_user(
 
 
 @router.post("/records", response_model=RecordCreateResponse)
-async def create_record(request: RecordCreateRequest, session: Session = Depends(get_db)):
+async def create_record(
+        request: RecordCreateRequest,
+        session: Session = Depends(get_db)):
     user = session.query(User).filter_by(id=request.user_id, token=request.token).first()
     if user is None:
         raise HTTPException(
@@ -77,7 +79,10 @@ async def create_record(request: RecordCreateRequest, session: Session = Depends
 
 
 @router.get("/record")
-async def get_record(file_id: str, user_id: int, session: Session = Depends(get_db)):
+async def get_record(
+        file_id: str,
+        user_id: int,
+        session: Session = Depends(get_db)):
     record = session.query(Record).filter(file_id=file_id, user_id=user_id).first()
     if record is None:
         raise HTTPException(
