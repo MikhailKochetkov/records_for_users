@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.post("/users", response_model=UserCreateResponse)
-def create_user(
+async def create_user(
         request: UserCreateRequest,
         session: Session = Depends(get_db)):
     if session.query(User).filter_by(email=request.email).first():
@@ -42,7 +42,7 @@ def create_user(
 
 
 @router.post("/records", response_model=RecordCreateResponse)
-def create_record(request: RecordCreateRequest, session: Session = Depends(get_db)):
+async def create_record(request: RecordCreateRequest, session: Session = Depends(get_db)):
     user = session.query(User).filter_by(id=request.user_id, token=request.token).first()
     if user is None:
         raise HTTPException(
@@ -77,7 +77,7 @@ def create_record(request: RecordCreateRequest, session: Session = Depends(get_d
 
 
 @router.get("/record")
-def get_record(file_id: str, user_id: int, session: Session = Depends(get_db)):
+async def get_record(file_id: str, user_id: int, session: Session = Depends(get_db)):
     record = session.query(Record).filter(file_id=file_id, user_id=user_id).first()
     if record is None:
         raise HTTPException(
