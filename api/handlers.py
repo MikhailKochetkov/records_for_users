@@ -60,6 +60,8 @@ async def create_record(
     new_full_name = format_filename(request.audio)
     record_id = str(uuid4())
     input_path = fr"{request.audio}"
+    if not os.path.exists(UPLOADED_FILES):
+        os.mkdir(UPLOADED_FILES)
     output_path = UPLOADED_FILES + new_full_name
     with open(input_path, "rb") as f:
         f.read()
