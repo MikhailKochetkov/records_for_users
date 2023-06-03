@@ -6,7 +6,7 @@ class FileExtensionEnum(enum.Enum):
     wav = '.wav'
 
 
-def check_extension(filepath):
+def check_extension(filepath) -> bool:
     full_name = path.basename(filepath)
     ext = path.splitext(full_name)[1]
     for e in FileExtensionEnum:
@@ -15,7 +15,7 @@ def check_extension(filepath):
         return True
 
 
-def format_filename(filepath):
+def format_filename(filepath) -> str:
     full_name = path.basename(filepath)
     name = path.splitext(full_name)[0]
     return name + '.mp3'
