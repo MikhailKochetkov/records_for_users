@@ -1,11 +1,11 @@
 from sqlalchemy import create_engine
 
-from settings import DATABASE_URL
+from db.db_connection import CONNECTION_STRING
 from db.models import User, Record
 
 
 def main():
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(CONNECTION_STRING)
     User.metadata.create_all(engine)
     Record.metadata.create_all(engine)
 
