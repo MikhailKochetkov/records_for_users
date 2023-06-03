@@ -63,6 +63,11 @@ async def create_record(
     if not os.path.exists(UPLOADED_FILES):
         os.mkdir(UPLOADED_FILES)
     output_path = UPLOADED_FILES + new_full_name
+    if os.path.exists(output_path):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="File already exists"
+        )
     with open(input_path, "rb") as f:
         f.read()
     try:
