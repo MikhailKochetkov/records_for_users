@@ -1,6 +1,11 @@
 import os
 import ffmpeg
-from fastapi import APIRouter, HTTPException, Depends, status
+import shutil
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Depends,
+    status)
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -12,7 +17,12 @@ from .schemas import (
     UserCreateResponse,
     RecordCreateResponse,
     RecordCreateRequest)
-from settings import HOST, PORT, UPLOADED_FILES
+from settings import (
+    HOST,
+    PORT,
+    UPLOADED_FILES,
+    WAV_UPLOADED_FILES,
+    MP3_UPLOADED_FILES)
 from .file_handlers import (
     check_extension,
     format_filename)
@@ -20,7 +30,7 @@ from .file_handlers import (
 router = APIRouter()
 
 
-@router.post("/users", response_model=UserCreateResponse)
+@router.post("/users", tags=["Create user"], response_model=UserCreateResponse)
 async def create_user(
         request: UserCreateRequest,
         session: Session = Depends(get_db)):
@@ -41,7 +51,7 @@ async def create_user(
     return {"id": user.id, "token": user.token}
 
 
-@router.post("/records", response_model=RecordCreateResponse)
+@router.post("/records", tags=["Create record"], response_model=RecordCreateResponse)
 async def create_record(
         request: RecordCreateRequest,
         session: Session = Depends(get_db)):
@@ -51,18 +61,22 @@ async def create_record(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user_id or token"
         )
-    check_ext = check_extension(request.audio)
-    if not check_ext:
+    if not check_extension(request.audio):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File extension is not supported"
         )
-    new_full_name = format_filename(request.audio)
-    record_id = str(uuid4())
-    input_path = fr"{request.audio}"
     if not os.path.exists(UPLOADED_FILES):
         os.mkdir(UPLOADED_FILES)
-    output_path = UPLOADED_FILES + new_full_name
+    if not os.path.exists(MP3_UPLOADED_FILES):
+        os.mkdir(MP3_UPLOADED_FILES)
+    if not os.path.exists(WAV_UPLOADED_FILES):
+        os.mkdir(WAV_UPLOADED_FILES)
+    old_filepath = shutil.copy(request.audio, WAV_UPLOADED_FILES)
+    new_full_name = format_filename(old_filepath)
+    record_id = str(uuid4())
+    input_path = fr"{old_filepath}"
+    output_path = MP3_UPLOADED_FILES + new_full_name
     if os.path.exists(output_path):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -85,24 +99,24 @@ async def create_record(
     return {"url": f"http://{HOST}:{PORT}/record?id={record_id}&user={user.id}"}
 
 
-@router.get("/record")
+@router.get("/record", tags=["Download record"])
 async def get_record(
-        file_id: str,
-        user_id: int,
+        id: str,
+        user: int,
         session: Session = Depends(get_db)):
-    record = session.query(Record).filter(file_id=file_id, user_id=user_id).first()
+    record = session.query(Record).filter_by(file_id=id, user_id=user).first()
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Record not found"
         )
-    if not os.path.exists(UPLOADED_FILES + record.file_name):
+    if not os.path.exists(MP3_UPLOADED_FILES + record.file_name):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File not found"
         )
     return FileResponse(
-        UPLOADED_FILES + record.file_name,
+        MP3_UPLOADED_FILES + record.file_name,
         media_type="audio/mpeg",
         filename=record.file_name
     )

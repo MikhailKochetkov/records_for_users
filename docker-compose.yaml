@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13.0-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - database:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=database
+
+  app:
+    build: .
+    command: uvicorn main:application --host 0.0.0.0
+    ports:
+      - "8000:8000"
+    restart: always
+    volumes:
+      - type: volume
+        source: old_media
+        target: /api/media/wav/
+        volume:
+          nocopy: false
+      - type: volume
+        source: new_media
+        target: /api/media/mp3/
+        volume:
+          nocopy: false
+    depends_on:
+      - db
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+
+volumes:
+  database:
+  old_media:
+  new_media:
