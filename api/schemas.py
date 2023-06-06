@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, FilePath
+from pydantic import BaseModel, EmailStr
 
 
 class UserCreateRequest(BaseModel):
@@ -9,12 +9,6 @@ class UserCreateRequest(BaseModel):
 class UserCreateResponse(BaseModel):
     id: int
     token: str
-
-
-class RecordCreateRequest(BaseModel):
-    user_id: int
-    token: str
-    audio: FilePath
 
 
 class RecordCreateResponse(BaseModel):

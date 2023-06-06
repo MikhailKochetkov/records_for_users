@@ -1,11 +1,12 @@
 import os
 import ffmpeg
-import shutil
 from fastapi import (
     APIRouter,
     HTTPException,
     Depends,
-    status)
+    status,
+    UploadFile,
+    File)
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -15,8 +16,7 @@ from db.session import get_db
 from .schemas import (
     UserCreateRequest,
     UserCreateResponse,
-    RecordCreateResponse,
-    RecordCreateRequest)
+    RecordCreateResponse)
 from settings import (
     HOST,
     PORT,
@@ -25,7 +25,9 @@ from settings import (
     MP3_UPLOADED_FILES)
 from .file_handlers import (
     check_extension,
-    format_filename)
+    format_filename,
+    save_file_to_uploads,
+    new_format_filename)
 
 router = APIRouter()
 
@@ -53,15 +55,17 @@ async def create_user(
 
 @router.post("/records", tags=["Create record"], response_model=RecordCreateResponse)
 async def create_record(
-        request: RecordCreateRequest,
+        user_id: int,
+        token: str,
+        file: UploadFile = File(...),
         session: Session = Depends(get_db)):
-    user = session.query(User).filter_by(id=request.user_id, token=request.token).first()
+    user = session.query(User).filter_by(id=user_id, token=token).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user_id or token"
         )
-    if not check_extension(request.audio):
+    if not check_extension(file):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File extension is not supported"
@@ -72,8 +76,10 @@ async def create_record(
         os.mkdir(MP3_UPLOADED_FILES)
     if not os.path.exists(WAV_UPLOADED_FILES):
         os.mkdir(WAV_UPLOADED_FILES)
-    old_filepath = shutil.copy(request.audio, WAV_UPLOADED_FILES)
-    new_full_name = format_filename(old_filepath)
+    full_name = format_filename(file)
+    await save_file_to_uploads(file, full_name)
+    old_filepath = WAV_UPLOADED_FILES + full_name
+    new_full_name = new_format_filename(old_filepath)
     record_id = str(uuid4())
     input_path = fr"{old_filepath}"
     output_path = MP3_UPLOADED_FILES + new_full_name
