@@ -1,5 +1,8 @@
 import enum
+import ffmpeg
 import os
+from fastapi import HTTPException, status
+
 from settings import WAV_UPLOADED_FILES
 
 
@@ -31,3 +34,17 @@ async def save_file_to_uploads(file, filename):
         file_content = await file.read()
         uploaded_file.write(file_content)
         uploaded_file.close()
+
+
+def convert_file(in_stream, out_stream):
+    with open(in_stream, "rb") as f:
+        f.read()
+    try:
+        stream = ffmpeg.input(in_stream)
+        stream = ffmpeg.output(stream, out_stream)
+        ffmpeg.run(stream)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

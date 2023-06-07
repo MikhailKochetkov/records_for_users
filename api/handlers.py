@@ -1,5 +1,4 @@
 import os
-import ffmpeg
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -27,7 +26,8 @@ from .file_handlers import (
     check_extension,
     format_filename,
     save_file_to_uploads,
-    new_format_filename)
+    new_format_filename,
+    convert_file)
 
 router = APIRouter()
 
@@ -76,9 +76,9 @@ async def create_record(
         os.mkdir(MP3_UPLOADED_FILES)
     if not os.path.exists(WAV_UPLOADED_FILES):
         os.mkdir(WAV_UPLOADED_FILES)
-    full_name = format_filename(file)
-    await save_file_to_uploads(file, full_name)
-    old_filepath = WAV_UPLOADED_FILES + full_name
+    old_full_name = format_filename(file)
+    await save_file_to_uploads(file, old_full_name)
+    old_filepath = WAV_UPLOADED_FILES + old_full_name
     new_full_name = new_format_filename(old_filepath)
     record_id = str(uuid4())
     input_path = fr"{old_filepath}"
@@ -88,17 +88,7 @@ async def create_record(
             status_code=status.HTTP_409_CONFLICT,
             detail="File already exists"
         )
-    with open(input_path, "rb") as f:
-        f.read()
-    try:
-        stream = ffmpeg.input(input_path)
-        stream = ffmpeg.output(stream, output_path)
-        ffmpeg.run(stream)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    convert_file(input_path, output_path)
     record = Record(file_id=record_id, file_name=new_full_name, owner=user)
     session.add(record)
     session.commit()
