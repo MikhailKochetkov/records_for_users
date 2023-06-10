@@ -89,6 +89,11 @@ docker-compose up -d --build
 
 Остановить контейнеры:
 ```bash
+docker-compose stop
+```
+
+Остановить и удалить все контейнеры, образы, volumes:
+```bash
 docker-compose down -v
 ```
 
