@@ -18,8 +18,8 @@ class User(Base):
 class Record(Base):
     __tablename__ = 'records'
 
-    id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(String, unique=True)
+    id = Column(String, primary_key=True, index=True)
     file_name = Column(String)
+    orig_file_name = Column(String)
     user_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship('User', back_populates='records')

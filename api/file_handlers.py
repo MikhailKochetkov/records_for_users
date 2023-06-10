@@ -4,8 +4,6 @@ import os
 
 from fastapi import HTTPException, status
 
-from settings import WAV_UPLOADED_FILES
-
 
 allowed_extensions = {".wav"}
 
@@ -15,24 +13,10 @@ def check_extension(file) -> bool:
     return ext in allowed_extensions
 
 
-def new_format_filename(filepath) -> str:
-    full_name = os.path.basename(filepath)
-    name = os.path.splitext(full_name)[0]
-    return name + '.mp3'
-
-
-def format_filename(file):
-    filename, ext = os.path.splitext(file.filename)
-    return filename + ext
-
-
 async def save_file_to_uploads_async(file, filename):
-    async with aiofile.async_open(
-            f'{WAV_UPLOADED_FILES}{filename}', "wb"
-    ) as uploaded_file:
+    async with aiofile.async_open(filename, "wb") as uploaded_file:
         file_content = await file.read()
         await uploaded_file.write(file_content)
-        await uploaded_file.close()
 
 
 async def convert_file_async(input_stream, output_stream):
