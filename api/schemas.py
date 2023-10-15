@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, AnyUrl
 
 
 class UserCreateRequest(BaseModel):
@@ -12,4 +12,4 @@ class UserCreateResponse(BaseModel):
 
 
 class RecordCreateResponse(BaseModel):
-    url: str
+    url: AnyUrl

@@ -5,7 +5,7 @@ import os
 from fastapi import HTTPException, status
 
 
-allowed_extensions = {".wav"}
+allowed_extensions = {'.wav'}
 
 
 def check_extension(file) -> bool:
@@ -14,13 +14,13 @@ def check_extension(file) -> bool:
 
 
 async def save_file_to_uploads_async(file, filename):
-    async with aiofile.async_open(filename, "wb") as uploaded_file:
+    async with aiofile.async_open(filename, 'wb') as uploaded_file:
         file_content = await file.read()
         await uploaded_file.write(file_content)
 
 
 async def convert_file_async(input_stream, output_stream):
-    async with aiofile.async_open(input_stream, "rb") as f:
+    async with aiofile.async_open(input_stream, 'rb') as f:
         await f.read()
     try:
         stream = ffmpeg.input(input_stream)
