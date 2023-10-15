@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  b2c:
+  records:
     driver: bridge
 
 services:
@@ -10,14 +10,21 @@ services:
     restart: always
     volumes:
       - database:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=records
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+      - PG_DB_URL=postgresql+asyncpg://
     networks:
-      - b2c
-    env_file:
-      - .env
+      - records
 
   app:
-    build: .
-    command: uvicorn main:application --host 0.0.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0"
     ports:
       - "8000:8000"
     restart: always
@@ -32,24 +39,22 @@ services:
         target: /api/media/mp3/
         volume:
           nocopy: false
-    networks:
-      - b2c
     depends_on:
       - db
     environment:
       - PYTHONUNBUFFERED=1
-    env_file:
-      - .env
+    networks:
+      - records
 
   ffmpeg:
-    container_name: b2c-ffmpeg
+    container_name: ffmpeg
     image: jrottenberg/ffmpeg
-    networks:
-      - b2c
     ports:
       - "29002:8000"
     tty: true
     entrypoint: "bash"
+    networks:
+      - records
 
 volumes:
   database:
