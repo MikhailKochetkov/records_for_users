@@ -1,26 +1,15 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine)
 
-from .db_connection import CONNECTION_STRING, PG_CONNECTION_STRING
-from settings import DEV_MODE
-from .models import User, Record
-
-
-if DEV_MODE:
-    engine = create_engine(CONNECTION_STRING, connect_args={"check_same_thread": False})
-    User.metadata.create_all(engine)
-    Record.metadata.create_all(engine)
-    SessionLocal = sessionmaker(autoflush=False, bind=engine)
-else:
-    engine = create_engine(PG_CONNECTION_STRING)
-    User.metadata.create_all(engine)
-    Record.metadata.create_all(engine)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from .db_connection import CONNECTION_STRING
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+engine = create_async_engine(CONNECTION_STRING, pool_pre_ping=True)
+async_session = async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
+
+
+async def get_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session

@@ -16,8 +16,8 @@ if not os.path.exists(MP3_UPLOADED_FILES):
 if not os.path.exists(WAV_UPLOADED_FILES):
     os.mkdir(WAV_UPLOADED_FILES)
 
-application = FastAPI(title="Create users and save audio records")
+app = FastAPI(title='Create users and save audio records')
 main_router = APIRouter()
 
 main_router.include_router(router)
-application.include_router(main_router)
+app.include_router(main_router)
